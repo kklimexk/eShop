@@ -1,0 +1,15 @@
+package domain
+
+sealed trait OrderingProcessFSMState
+
+case object Idle extends OrderingProcessFSMState
+
+case object InBasket extends OrderingProcessFSMState
+
+case object WaitingForChoosingDeliveryMethod extends OrderingProcessFSMState
+
+case object WaitingForChoosingPaymentMethod extends OrderingProcessFSMState
+
+case object OrderReadyToProcess extends OrderingProcessFSMState
+
+case object OrderProcessed extends OrderingProcessFSMState
