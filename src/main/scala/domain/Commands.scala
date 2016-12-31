@@ -5,7 +5,7 @@ import models.PaymentMethod.PaymentMethod
 
 sealed trait Command
 
-case object CreateBasketCommand extends Command
+case object CreateOrderCommand extends Command
 
 case class AddItemToBasketCommand(product: models.Product) extends Command
 
@@ -16,5 +16,3 @@ case class ChooseDeliveryMethodCommand(deliveryMethod: DeliveryMethod) extends C
 case class ChoosePaymentMethodCommand(paymentMethod: PaymentMethod) extends Command
 
 case object ProcessOrderCommand extends Command
-
-case object PrintOutOrderCommand extends Command

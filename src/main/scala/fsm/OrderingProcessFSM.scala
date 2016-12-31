@@ -1,18 +1,19 @@
 package fsm
 
-import akka.actor.{FSM, Props}
+import actors.DisplayOrderActor.{DisplayOrderCommand, OrderDisplayedEvent}
+import akka.actor.{ActorRef, FSM, Props}
 import domain._
 
 import scala.concurrent.duration._
 
-class OrderingProcessFSM extends FSM[OrderingProcessFSMState, OrderingProcessFSMData] {
+class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProcessFSMState, OrderingProcessFSMData] {
 
   val orderReadyExpirationTimeout: FiniteDuration = 10.seconds
 
   startWith(Idle, Empty)
 
   when(Idle) {
-    case Event(CreateBasketCommand, Empty) =>
+    case Event(CreateOrderCommand, Empty) =>
       println("Creating Basket...")
       goto(InBasket) using Basket(products = Seq.empty)
   }
@@ -39,28 +40,36 @@ class OrderingProcessFSM extends FSM[OrderingProcessFSMState, OrderingProcessFSM
   }
 
   when(OrderReadyToProcess, orderReadyExpirationTimeout) {
-    case Event(ProcessOrderCommand, data: DataOrder) =>
+    case Event(ProcessOrderCommand, _) =>
       println("Processing order...")
-      goto(OrderProcessed) using data
+      goto(OrderProcessed)
     case Event(StateTimeout, data: DataOrder) =>
       println("Timeout! Back to state InBasket")
       goto(InBasket) using data.clearDataAfterTimeout
   }
 
   when(OrderProcessed) {
-    case Event(PrintOutOrderCommand, data: DataOrder) =>
-      println("Order: " + data + " processed")
+    case Event(OrderDisplayedEvent, _) =>
+      println("Order processed!")
       stop()
   }
 
+  onTransition {
+    case OrderReadyToProcess -> OrderProcessed =>
+      stateData match {
+        case dataOrder@DataOrder(_, _, _) =>
+          displayOrderActor ! DisplayOrderCommand(dataOrder)
+      }
+  }
+
   onTermination {
-    case StopEvent(FSM.Normal, OrderProcessed, data) =>
+    case StopEvent(FSM.Normal, OrderProcessed, _) =>
       println("Closing system...")
       context.system.terminate()
   }
 
   whenUnhandled {
-    case Event(CreateBasketCommand, _) =>
+    case Event(CreateOrderCommand, _) =>
       println("Basket has been already created!")
       stay
     case Event(e, _) =>
@@ -72,5 +81,5 @@ class OrderingProcessFSM extends FSM[OrderingProcessFSMState, OrderingProcessFSM
 }
 
 object OrderingProcessFSM {
-  def props: Props = Props[OrderingProcessFSM]
+  def props(displayOrderActor: ActorRef): Props = Props(classOf[OrderingProcessFSM], displayOrderActor)
 }

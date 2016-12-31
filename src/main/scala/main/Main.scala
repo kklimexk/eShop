@@ -1,5 +1,6 @@
 package main
 
+import actors.DisplayOrderActor
 import akka.actor.ActorSystem
 import domain.{ProcessOrderCommand, _}
 import fsm.OrderingProcessFSM
@@ -14,9 +15,11 @@ object Main {
 
   def main(args: Array[String]): Unit = {
 
-    val orderingProcessFSM = system.actorOf(OrderingProcessFSM.props, "Order1")
+    val displayOrderActor = system.actorOf(DisplayOrderActor.props, "DisplayOrderActor")
+    val orderingProcessFSM = system.actorOf(OrderingProcessFSM.props(displayOrderActor), "Order1")
 
-    orderingProcessFSM ! CreateBasketCommand
+    orderingProcessFSM ! CreateOrderCommand
+
     orderingProcessFSM ! AddItemToBasketCommand(models.Product(1, "iPhone 5s"))
     orderingProcessFSM ! AddItemToBasketCommand(models.Product(2, "The Witcher 3"))
 
@@ -26,7 +29,6 @@ object Main {
     orderingProcessFSM ! ChoosePaymentMethodCommand(paymentMethod = PaymentMethod.CreditCard)
 
     orderingProcessFSM ! ProcessOrderCommand
-    orderingProcessFSM ! PrintOutOrderCommand
 
     Await.ready(system.whenTerminated, Duration.Inf)
   }
