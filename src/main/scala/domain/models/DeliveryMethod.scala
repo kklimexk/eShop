@@ -1,4 +1,4 @@
-package models
+package domain.models
 
 object DeliveryMethod extends Enumeration {
   type DeliveryMethod = Value

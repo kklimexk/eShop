@@ -17,8 +17,8 @@ object Main {
     val orderingProcessFSM = system.actorOf(OrderingProcessFSM.props, "Order1")
 
     orderingProcessFSM ! CreateBasketCommand
-    orderingProcessFSM ! AddItemToBasketCommand(models.Product("1", "iPhone 5s"))
-    orderingProcessFSM ! AddItemToBasketCommand(models.Product("2", "The Witcher 3"))
+    orderingProcessFSM ! AddItemToBasketCommand(models.Product(1, "iPhone 5s"))
+    orderingProcessFSM ! AddItemToBasketCommand(models.Product(2, "The Witcher 3"))
 
     orderingProcessFSM ! CheckoutCommand
 
