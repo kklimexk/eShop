@@ -1,18 +1,15 @@
 package main
 
 import actors.DisplayOrderActor
-import akka.actor.ActorSystem
 import domain.{ProcessOrderCommand, _}
 import fsm.OrderingProcessFSM
 import models.{DeliveryMethod, PaymentMethod}
+import shared.Global.Implicits._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 object Main {
-
-  val system = ActorSystem()
-
   def main(args: Array[String]): Unit = {
 
     val displayOrderActor = system.actorOf(DisplayOrderActor.props, "DisplayOrderActor")

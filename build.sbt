@@ -10,7 +10,7 @@ lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "eShop"
-  ).aggregate(eShopCore).dependsOn(eShopCore)
+  ).aggregate(eShopCore, eShopShared).dependsOn(eShopCore, eShopShared)
 
 lazy val eShopCore = (project in file("eShop-core")).
   settings(commonSettings: _*).
@@ -18,5 +18,15 @@ lazy val eShopCore = (project in file("eShop-core")).
     name := "eShop-core",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion
+    )
+  )
+
+lazy val eShopShared = (project in file("eShop-shared")).
+  settings(commonSettings: _*).
+  settings(
+    name := "eShop-shared",
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion
     )
   )
