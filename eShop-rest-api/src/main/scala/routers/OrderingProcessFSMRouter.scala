@@ -2,11 +2,10 @@ package routers
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives._
 import domain._
-import domain.models.{DeliveryMethod, PaymentMethod, Product}
+import domain.models._
 
-class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends Router {
+class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter {
 
   override def route: Route = {
     createOrder ~
@@ -28,9 +27,11 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends Router {
 
   private def addItemToBasket = {
     post {
-      path("addItemToBasket" / "id" / LongNumber / "name" / """\w+""".r) { (id, name) =>
-        orderingProcessFSM ! AddItemToBasketCommand(Product(id, name))
-        complete("added item to basket!")
+      path("addItemToBasket") {
+        entity(as[Product]) { product =>
+          orderingProcessFSM ! AddItemToBasketCommand(product)
+          complete("added item to basket!")
+        }
       }
     }
   }
@@ -46,18 +47,22 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends Router {
 
   private def chooseDeliveryMethod = {
     post {
-      path("deliveryMethod" / """\w+""".r) { deliveryMethod =>
-        orderingProcessFSM ! ChooseDeliveryMethodCommand(deliveryMethod = DeliveryMethod.withName(deliveryMethod))
-        complete("delivery method chosen!")
+      path("deliveryMethod") {
+        entity(as[DeliveryMethodEntity]) { deliveryMethod =>
+          orderingProcessFSM ! ChooseDeliveryMethodCommand(deliveryMethod = DeliveryMethod.withName(deliveryMethod.name))
+          complete("delivery method chosen!")
+        }
       }
     }
   }
 
   private def choosePaymentMethod = {
     post {
-      path("paymentMethod" / """\w+""".r) { paymentMethod =>
-        orderingProcessFSM ! ChoosePaymentMethodCommand(paymentMethod = PaymentMethod.withName(paymentMethod))
-        complete("payment method chosen!")
+      path("paymentMethod") {
+        entity(as[PaymentMethodEntity]) { paymentMethod =>
+          orderingProcessFSM ! ChoosePaymentMethodCommand(paymentMethod = PaymentMethod.withName(paymentMethod.name))
+          complete("payment method chosen!")
+        }
       }
     }
   }
