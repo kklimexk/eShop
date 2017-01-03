@@ -3,6 +3,7 @@ package fsm
 import actors.DisplayOrderActor.{DisplayOrderCommand, OrderDisplayedEvent}
 import akka.actor.{ActorRef, FSM, Props}
 import domain._
+import domain.models.response.OrderingProcessInfoResponse
 
 import scala.concurrent.duration._
 
@@ -15,34 +16,34 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProces
   when(Idle) {
     case Event(CreateOrderCommand, Empty) =>
       println("Creating Basket...")
-      goto(InBasket) using Basket(products = Seq.empty)
+      goto(InBasket) using Basket(products = Seq.empty) replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "order created or already created!")
   }
 
   when(InBasket) {
     case Event(AddItemToBasketCommand(product), b: Basket) =>
       println("Adding: " + product + " to basket: " + b)
-      stay using b.addItemToBasket(product)
+      stay using b.addItemToBasket(product) replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "added item to basket!")
     case Event(CheckoutCommand, b: Basket) =>
       println("Checkout with products: " + b)
-      goto(WaitingForChoosingDeliveryMethod) using b
+      goto(WaitingForChoosingDeliveryMethod) using b replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "checkout!")
   }
 
   when(WaitingForChoosingDeliveryMethod) {
     case Event(ChooseDeliveryMethodCommand(deliveryMethod), b: Basket) =>
       println("Delivery method: " + deliveryMethod)
-      goto(WaitingForChoosingPaymentMethod) using DataWithDeliveryMethod(b, deliveryMethod)
+      goto(WaitingForChoosingPaymentMethod) using DataWithDeliveryMethod(b, deliveryMethod) replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "delivery method chosen!")
   }
 
   when(WaitingForChoosingPaymentMethod) {
     case Event(ChoosePaymentMethodCommand(paymentMethod), data: DataWithDeliveryMethod) =>
       println("Payment method: " + paymentMethod)
-      goto(OrderReadyToProcess) using DataOrder(data.basket, data.deliveryMethod, paymentMethod)
+      goto(OrderReadyToProcess) using DataOrder(data.basket, data.deliveryMethod, paymentMethod) replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "payment method chosen!")
   }
 
   when(OrderReadyToProcess, orderReadyExpirationTimeout) {
     case Event(ProcessOrderCommand, _) =>
       println("Processing order...")
-      goto(OrderProcessed)
+      goto(OrderProcessed) replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "order processed!")
     case Event(StateTimeout, data: DataOrder) =>
       println("Timeout! Back to state InBasket")
       goto(InBasket) using data.clearDataAfterTimeout
@@ -71,10 +72,10 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProces
   whenUnhandled {
     case Event(CreateOrderCommand, _) =>
       println("Basket has been already created!")
-      stay
+      stay replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "Basket has been already created!")
     case Event(e, _) =>
       println("Event: " + e + " cannot be handled in state: " + stateName)
-      stay
+      stay replying OrderingProcessInfoResponse(stateName.toString, stateData.toString, "Event: " + e + " cannot be handled in state: " + stateName)
   }
 
   initialize()

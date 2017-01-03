@@ -1,11 +1,20 @@
 package routers
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.ask
+import akka.util.Timeout
 import domain._
 import domain.models._
+import domain.models.response.OrderingProcessInfoResponse
+
+import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter {
+
+  implicit val timeout = Timeout(2.seconds)
 
   override def route: Route = {
     createOrder ~
@@ -19,8 +28,13 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
   private def createOrder = {
     post {
       path("createOrder") {
-        orderingProcessFSM ! CreateOrderCommand
-        complete("order created or already created!")
+        val responseF = (orderingProcessFSM ? CreateOrderCommand).mapTo[OrderingProcessInfoResponse]
+        onComplete(responseF) {
+          case Success(response) =>
+            complete(response)
+          case Failure(_) =>
+            complete(StatusCodes.InternalServerError)
+        }
       }
     }
   }
@@ -29,8 +43,13 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
     post {
       path("addItemToBasket") {
         entity(as[Product]) { product =>
-          orderingProcessFSM ! AddItemToBasketCommand(product)
-          complete("added item to basket!")
+          val responseF = (orderingProcessFSM ? AddItemToBasketCommand(product)).mapTo[OrderingProcessInfoResponse]
+          onComplete(responseF) {
+            case Success(response) =>
+              complete(response)
+            case Failure(_) =>
+              complete(StatusCodes.InternalServerError)
+          }
         }
       }
     }
@@ -39,8 +58,13 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
   private def checkout = {
     post {
       path("checkout") {
-        orderingProcessFSM ! CheckoutCommand
-        complete("checkout!")
+        val responseF = (orderingProcessFSM ? CheckoutCommand).mapTo[OrderingProcessInfoResponse]
+        onComplete(responseF) {
+          case Success(response) =>
+            complete(response)
+          case Failure(_) =>
+            complete(StatusCodes.InternalServerError)
+        }
       }
     }
   }
@@ -49,8 +73,13 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
     post {
       path("deliveryMethod") {
         entity(as[DeliveryMethodEntity]) { deliveryMethod =>
-          orderingProcessFSM ! ChooseDeliveryMethodCommand(deliveryMethod = DeliveryMethod.withName(deliveryMethod.name))
-          complete("delivery method chosen!")
+          val responseF = (orderingProcessFSM ? ChooseDeliveryMethodCommand(deliveryMethod = DeliveryMethod.withName(deliveryMethod.name))).mapTo[OrderingProcessInfoResponse]
+          onComplete(responseF) {
+            case Success(response) =>
+              complete(response)
+            case Failure(_) =>
+              complete(StatusCodes.InternalServerError)
+          }
         }
       }
     }
@@ -60,8 +89,13 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
     post {
       path("paymentMethod") {
         entity(as[PaymentMethodEntity]) { paymentMethod =>
-          orderingProcessFSM ! ChoosePaymentMethodCommand(paymentMethod = PaymentMethod.withName(paymentMethod.name))
-          complete("payment method chosen!")
+          val responseF = (orderingProcessFSM ? ChoosePaymentMethodCommand(paymentMethod = PaymentMethod.withName(paymentMethod.name))).mapTo[OrderingProcessInfoResponse]
+          onComplete(responseF) {
+            case Success(response) =>
+              complete(response)
+            case Failure(_) =>
+              complete(StatusCodes.InternalServerError)
+          }
         }
       }
     }
@@ -70,8 +104,13 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
   private def processOrder = {
     post {
       path("processOrder") {
-        orderingProcessFSM ! ProcessOrderCommand
-        complete("order processed!")
+        val responseF = (orderingProcessFSM ? ProcessOrderCommand).mapTo[OrderingProcessInfoResponse]
+        onComplete(responseF) {
+          case Success(response) =>
+            complete(response)
+          case Failure(_) =>
+            complete(StatusCodes.InternalServerError)
+        }
       }
     }
   }
