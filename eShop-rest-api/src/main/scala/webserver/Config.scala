@@ -2,7 +2,7 @@ package webserver
 
 import actors.DisplayOrderActor
 import routers.{MainRouter, OrderingProcessFSMRouter}
-import fsm.OrderingProcessFSM
+import persistence_fsm.OrderingProcessFSM
 import shared.Global.Implicits.system
 
 trait Config {

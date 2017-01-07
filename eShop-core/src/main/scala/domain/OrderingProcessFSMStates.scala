@@ -1,15 +1,29 @@
 package domain
 
-sealed trait OrderingProcessFSMState
+import akka.persistence.fsm.PersistentFSM.FSMState
 
-case object Idle extends OrderingProcessFSMState
+sealed trait OrderingProcessFSMState extends FSMState
 
-case object InBasket extends OrderingProcessFSMState
+case object Idle extends OrderingProcessFSMState {
+  override def identifier: String = "Idle"
+}
 
-case object WaitingForChoosingDeliveryMethod extends OrderingProcessFSMState
+case object InBasket extends OrderingProcessFSMState {
+  override def identifier: String = "InBasket"
+}
 
-case object WaitingForChoosingPaymentMethod extends OrderingProcessFSMState
+case object WaitingForChoosingDeliveryMethod extends OrderingProcessFSMState {
+  override def identifier: String = "WaitingForChoosingDeliveryMethod"
+}
 
-case object OrderReadyToProcess extends OrderingProcessFSMState
+case object WaitingForChoosingPaymentMethod extends OrderingProcessFSMState {
+  override def identifier: String = "WaitingForChoosingPaymentMethod"
+}
 
-case object OrderProcessed extends OrderingProcessFSMState
+case object OrderReadyToProcess extends OrderingProcessFSMState {
+  override def identifier: String = "OrderReadyToProcess"
+}
+
+case object OrderProcessed extends OrderingProcessFSMState {
+  override def identifier: String = "OrderProcessed"
+}

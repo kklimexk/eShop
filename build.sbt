@@ -6,6 +6,8 @@ lazy val commonSettings = Seq(
 
 lazy val akkaVersion = "2.4.16"
 lazy val akkaHttpVersion = "10.0.1"
+lazy val levelDbVersion = "0.7"
+lazy val levelDbJniAllVersion = "1.8"
 lazy val scalaTestVersion = "3.0.1"
 
 lazy val root = (project in file(".")).
@@ -20,6 +22,9 @@ lazy val eShopCore = (project in file("eShop-core")).
     name := "eShop-core",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
+      "org.iq80.leveldb" % "leveldb" % levelDbVersion,
+      "org.fusesource.leveldbjni" % "leveldbjni-all" % levelDbJniAllVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
