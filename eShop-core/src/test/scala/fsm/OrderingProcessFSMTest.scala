@@ -20,12 +20,12 @@ class OrderingProcessFSMTest extends TestKit(ActorSystem("TestActorSystem")) wit
 
     fsm ! CreateOrderCommand
 
-    assert(fsm.stateName == InBasket)
+    assert(fsm.stateName == InShoppingCart)
 
-    fsm ! AddItemToBasketCommand(models.Product(1, "iPhone 5s"))
-    fsm ! AddItemToBasketCommand(models.Product(2, "The Witcher 3"))
+    fsm ! AddItemToShoppingCartCommand(models.Product(1, "iPhone 5s"))
+    fsm ! AddItemToShoppingCartCommand(models.Product(2, "The Witcher 3"))
 
-    assert(fsm.stateName == InBasket)
+    assert(fsm.stateName == InShoppingCart)
 
     fsm ! CheckoutCommand
 
@@ -52,12 +52,12 @@ class OrderingProcessFSMTest extends TestKit(ActorSystem("TestActorSystem")) wit
 
     fsm ! CreateOrderCommand
 
-    assert(fsm.stateName == InBasket)
+    assert(fsm.stateName == InShoppingCart)
 
-    fsm ! AddItemToBasketCommand(models.Product(1, "iPhone 5s"))
-    fsm ! AddItemToBasketCommand(models.Product(2, "The Witcher 3"))
+    fsm ! AddItemToShoppingCartCommand(models.Product(1, "iPhone 5s"))
+    fsm ! AddItemToShoppingCartCommand(models.Product(2, "The Witcher 3"))
 
-    assert(fsm.stateName == InBasket)
+    assert(fsm.stateName == InShoppingCart)
 
     fsm ! CheckoutCommand
 
@@ -73,7 +73,7 @@ class OrderingProcessFSMTest extends TestKit(ActorSystem("TestActorSystem")) wit
 
     fsm ! StateTimeout
 
-    assert(fsm.stateName == InBasket)
+    assert(fsm.stateName == InShoppingCart)
   }
 
 }

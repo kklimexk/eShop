@@ -8,8 +8,8 @@ case object Idle extends OrderingProcessFSMState {
   override def identifier: String = "Idle"
 }
 
-case object InBasket extends OrderingProcessFSMState {
-  override def identifier: String = "InBasket"
+case object InShoppingCart extends OrderingProcessFSMState {
+  override def identifier: String = "InShoppingCart"
 }
 
 case object WaitingForChoosingDeliveryMethod extends OrderingProcessFSMState {

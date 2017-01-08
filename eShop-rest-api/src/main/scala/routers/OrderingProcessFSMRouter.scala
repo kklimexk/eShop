@@ -18,7 +18,7 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
 
   override def route: Route = {
     createOrder ~
-    addItemToBasket ~
+    addItemToShoppingCart ~
     checkout ~
     chooseDeliveryMethod ~
     choosePaymentMethod ~
@@ -33,11 +33,11 @@ class OrderingProcessFSMRouter(orderingProcessFSM: ActorRef) extends JsonRouter 
     }
   }
 
-  private def addItemToBasket = {
+  private def addItemToShoppingCart = {
     post {
-      path("addItemToBasket") {
+      path("addItemToShoppingCart") {
         entity(as[Product]) { product =>
-          response(orderingProcessFSM ? AddItemToBasketCommand(product))
+          response(orderingProcessFSM ? AddItemToShoppingCartCommand(product))
         }
       }
     }

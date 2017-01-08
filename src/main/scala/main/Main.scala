@@ -17,8 +17,8 @@ object Main {
 
     orderingProcessFSM ! CreateOrderCommand
 
-    orderingProcessFSM ! AddItemToBasketCommand(models.Product(1, "iPhone 5s"))
-    orderingProcessFSM ! AddItemToBasketCommand(models.Product(2, "The Witcher 3"))
+    orderingProcessFSM ! AddItemToShoppingCartCommand(models.Product(1, "iPhone 5s"))
+    orderingProcessFSM ! AddItemToShoppingCartCommand(models.Product(2, "The Witcher 3"))
 
     orderingProcessFSM ! CheckoutCommand
 

@@ -3,6 +3,7 @@ package persistence_fsm
 import actors.DisplayOrderActor.{DisplayOrderCommand, OrderDisplayedEvent}
 
 import akka.actor.{ActorRef, Props}
+import akka.persistence.DeleteMessagesSuccess
 import akka.persistence.fsm.PersistentFSM
 
 import domain.{CheckedOutEvent, DeliveryMethodChosenEvent, _}
@@ -20,37 +21,37 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends PersistentFSM[Orde
 
   override def applyEvent(domainEvent: OrderingProcessFSMEvent, currentData: OrderingProcessFSMData): OrderingProcessFSMData = {
     domainEvent match {
-      case OrderCreatedEvent => Basket(products = Seq.empty)
-      case ItemAddedToBasketEvent(basket, product) => basket.addItemToBasket(product)
+      case OrderCreatedEvent => currentData.empty()
+      case ItemAddedToShoppingCartEvent(product) => currentData.addItem(product)
       case CheckedOutEvent => currentData
-      case DeliveryMethodChosenEvent(basket, deliveryMethod) => DataWithDeliveryMethod(basket, deliveryMethod)
-      case PaymentMethodChosenEvent(data, paymentMethod) => DataOrder(data.basket, data.deliveryMethod, paymentMethod)
+      case DeliveryMethodChosenEvent(s, deliveryMethod) => currentData.withDeliveryMethod(s, deliveryMethod)
+      case PaymentMethodChosenEvent(data, paymentMethod) => currentData.withPaymentMethod(data.shoppingCart, data.deliveryMethod, paymentMethod)
       case OrderProcessedEvent => currentData
-      case OrderReadyTimeoutOccurredEvent => Basket(products = Seq.empty)
+      case OrderReadyTimeoutOccurredEvent => currentData.empty()
     }
   }
 
-  startWith(Idle, Empty)
+  startWith(Idle, EmptyShoppingCart)
 
   when(Idle) {
-    case Event(CreateOrderCommand, Empty) =>
-      println("Creating Basket...")
-      goto(InBasket) applying OrderCreatedEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order created!")
+    case Event(CreateOrderCommand, EmptyShoppingCart) =>
+      println("Creating shopping cart...")
+      goto(InShoppingCart) applying OrderCreatedEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order created!")
   }
 
-  when(InBasket) {
-    case Event(AddItemToBasketCommand(product), b: Basket) =>
-      println("Adding: " + product + " to basket: " + b)
-      stay applying ItemAddedToBasketEvent(b, product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to basket!")
-    case Event(CheckoutCommand, b: Basket) =>
-      println("Checkout with products: " + b)
+  when(InShoppingCart) {
+    case Event(AddItemToShoppingCartCommand(product), s@(_: NonEmptyShoppingCart | EmptyShoppingCart)) =>
+      println("Adding: " + product + " to shopping cart: " + s)
+      stay applying ItemAddedToShoppingCartEvent(product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to shopping cart!")
+    case Event(CheckoutCommand, s: NonEmptyShoppingCart) =>
+      println("Checkout with products: " + s)
       goto(WaitingForChoosingDeliveryMethod) applying CheckedOutEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "checkout!")
   }
 
   when(WaitingForChoosingDeliveryMethod) {
-    case Event(ChooseDeliveryMethodCommand(deliveryMethod), b: Basket) =>
+    case Event(ChooseDeliveryMethodCommand(deliveryMethod), s: NonEmptyShoppingCart) =>
       println("Delivery method: " + deliveryMethod)
-      goto(WaitingForChoosingPaymentMethod) applying DeliveryMethodChosenEvent(b, deliveryMethod) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "delivery method chosen!")
+      goto(WaitingForChoosingPaymentMethod) applying DeliveryMethodChosenEvent(s, deliveryMethod) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "delivery method chosen!")
   }
 
   when(WaitingForChoosingPaymentMethod) {
@@ -64,34 +65,37 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends PersistentFSM[Orde
       println("Processing order...")
       goto(OrderProcessed) applying OrderProcessedEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order processed!")
     case Event(StateTimeout, _) =>
-      println("Timeout! Back to state InBasket")
-      goto(InBasket) applying OrderReadyTimeoutOccurredEvent
+      println("Timeout! Back to state InShoppingCart")
+      goto(InShoppingCart) applying OrderReadyTimeoutOccurredEvent
   }
 
   when(OrderProcessed) {
     case Event(OrderDisplayedEvent, _) =>
       println("Order processed!")
-      stop()
+      deleteMessages(this.lastSequenceNr)
+      stay
   }
 
   onTransition {
     case OrderReadyToProcess -> OrderProcessed =>
       stateData match {
-        case dataOrder@DataOrder(_, _, _) =>
+        case dataOrder@DataWithPaymentMethod(_, _, _) =>
           displayOrderActor ! DisplayOrderCommand(dataOrder)
       }
   }
 
   onTermination {
     case StopEvent(PersistentFSM.Normal, OrderProcessed, _) =>
-      println("Closing system...")
-      context.system.terminate()
+      println("Closing order...")
   }
 
   whenUnhandled {
     case Event(CreateOrderCommand, _) =>
       println("Order has been already created!")
       stay replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "Order has been already created!")
+    case Event(DeleteMessagesSuccess(toSequenceNr), _) =>
+      println("All messages from journal deleted!" + " toSequenceNr: " + toSequenceNr)
+      stop()
     case Event(e, _) =>
       println("Event: " + e + " cannot be handled in state: " + stateName)
       stay replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "Event: " + e + " cannot be handled in state: " + stateName)
