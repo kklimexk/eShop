@@ -7,6 +7,7 @@ import domain.models.response.FSMProcessInfoResponse
 
 import scala.concurrent.duration._
 
+@deprecated("No longer supported! There is new persistence version of this FSM actor")
 class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProcessFSMState, OrderingProcessFSMData] {
 
   val orderReadyExpirationTimeout: FiniteDuration = 10.seconds
@@ -81,6 +82,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProces
   initialize()
 }
 
+@deprecated("No longer supported! There is new persistence version of this FSM actor")
 object OrderingProcessFSM {
   def props(displayOrderActor: ActorRef): Props = Props(classOf[OrderingProcessFSM], displayOrderActor)
 }

@@ -15,7 +15,7 @@ import scala.reflect._
 class OrderingProcessFSM(displayOrderActor: ActorRef) extends PersistentFSM[OrderingProcessFSMState, OrderingProcessFSMData, OrderingProcessFSMEvent] {
 
   override def domainEventClassTag: ClassTag[OrderingProcessFSMEvent] = classTag[OrderingProcessFSMEvent]
-  override def persistenceId: String = "OrderingProcessFSM"
+  override def persistenceId: String = "OrderingProcessFSM" + self.path
 
   val orderReadyExpirationTimeout: FiniteDuration = 10.seconds
 

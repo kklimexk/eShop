@@ -3,16 +3,16 @@ package domain
 import models.DeliveryMethod.DeliveryMethod
 import models.PaymentMethod.PaymentMethod
 
-sealed trait OrderingProcessFSMCommand
+sealed trait Command
 
-case object CreateOrderCommand extends OrderingProcessFSMCommand
+case object CreateOrderCommand extends Command
 
-case class AddItemToShoppingCartCommand(product: models.Product) extends OrderingProcessFSMCommand
+case class AddItemToShoppingCartCommand(product: models.Product) extends Command
 
-case object CheckoutCommand extends OrderingProcessFSMCommand
+case object CheckoutCommand extends Command
 
-case class ChooseDeliveryMethodCommand(deliveryMethod: DeliveryMethod) extends OrderingProcessFSMCommand
+case class ChooseDeliveryMethodCommand(deliveryMethod: DeliveryMethod) extends Command
 
-case class ChoosePaymentMethodCommand(paymentMethod: PaymentMethod) extends OrderingProcessFSMCommand
+case class ChoosePaymentMethodCommand(paymentMethod: PaymentMethod) extends Command
 
-case object ProcessOrderCommand extends OrderingProcessFSMCommand
+case object ProcessOrderCommand extends Command
