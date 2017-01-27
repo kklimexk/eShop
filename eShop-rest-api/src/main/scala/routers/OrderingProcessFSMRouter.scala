@@ -17,7 +17,8 @@ import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class OrderingProcessFSMRouter(displayOrderActor: ActorRef) extends JsonRouter with ResponseUtil {
+class OrderingProcessFSMRouter(displayOrderActor: ActorRef,
+                               productAvailabilityCheckerActor: ActorRef) extends JsonRouter with ResponseUtil {
 
   implicit val timeout = Timeout(5.seconds)
   val orderingProcessFSMFailureResponse = Future.successful(SimpleResponse("Order does not exist!"))
@@ -36,7 +37,7 @@ class OrderingProcessFSMRouter(displayOrderActor: ActorRef) extends JsonRouter w
   private def createOrder = {
     post {
       path("createOrder" / LongNumber) { orderId =>
-        def orElseResponse = (system.actorOf(OrderingProcessFSM.props(displayOrderActor), "order" + orderId) ? CreateOrderCommand).mapTo[FSMProcessInfoResponse]
+        def orElseResponse = (system.actorOf(OrderingProcessFSM.props(displayOrderActor, productAvailabilityCheckerActor), "order" + orderId) ? CreateOrderCommand).mapTo[FSMProcessInfoResponse]
 
         val responseF = extendedResponse[FSMProcessInfoResponse, FSMProcessInfoResponse]("/user/order" + orderId, CreateOrderCommand)(orElseResponse)
         onComplete(responseF) {

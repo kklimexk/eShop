@@ -9,6 +9,8 @@ case object OrderCreatedEvent extends OrderingProcessFSMEvent
 
 case class ItemAddedToShoppingCartEvent(product: models.Product) extends OrderingProcessFSMEvent
 
+case object ProductNotAvailableEvent extends OrderingProcessFSMEvent
+
 case object CheckedOutEvent extends OrderingProcessFSMEvent
 
 case class DeliveryMethodChosenEvent(shoppingCart: NonEmptyShoppingCart, deliveryMethod: DeliveryMethod) extends OrderingProcessFSMEvent

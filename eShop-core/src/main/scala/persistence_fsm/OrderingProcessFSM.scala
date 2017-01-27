@@ -1,28 +1,35 @@
 package persistence_fsm
 
 import actors.DisplayOrderActor.{DisplayOrderCommand, OrderDisplayedEvent}
+import actors.ProductAvailabilityCheckerActor.{CheckProductAvailabilityCommand, ProductAvailabilityCheckedEvent}
 
 import akka.actor.{ActorRef, Props}
 import akka.persistence.DeleteMessagesSuccess
 import akka.persistence.fsm.PersistentFSM
+import akka.pattern.ask
+import akka.util.Timeout
 
 import domain.{CheckedOutEvent, DeliveryMethodChosenEvent, _}
 import domain.models.response.FSMProcessInfoResponse
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect._
 
-class OrderingProcessFSM(displayOrderActor: ActorRef) extends PersistentFSM[OrderingProcessFSMState, OrderingProcessFSMData, OrderingProcessFSMEvent] {
+class OrderingProcessFSM(displayOrderActor: ActorRef,
+                         productAvailabilityCheckerActor: ActorRef) extends PersistentFSM[OrderingProcessFSMState, OrderingProcessFSMData, OrderingProcessFSMEvent] {
 
   override def domainEventClassTag: ClassTag[OrderingProcessFSMEvent] = classTag[OrderingProcessFSMEvent]
   override def persistenceId: String = "OrderingProcessFSM" + self.path
 
-  val orderReadyExpirationTimeout: FiniteDuration = 10.seconds
+  implicit val timeout = Timeout(10.seconds)
 
   override def applyEvent(domainEvent: OrderingProcessFSMEvent, currentData: OrderingProcessFSMData): OrderingProcessFSMData = {
     domainEvent match {
       case OrderCreatedEvent => currentData.empty()
       case ItemAddedToShoppingCartEvent(product) => currentData.addItem(product)
+      case ProductNotAvailableEvent => currentData
       case CheckedOutEvent => currentData
       case DeliveryMethodChosenEvent(s, deliveryMethod) => currentData.withDeliveryMethod(s, deliveryMethod)
       case PaymentMethodChosenEvent(data, paymentMethod) => currentData.withPaymentMethod(data.shoppingCart, data.deliveryMethod, paymentMethod)
@@ -42,7 +49,14 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends PersistentFSM[Orde
   when(InShoppingCart) {
     case Event(AddItemToShoppingCartCommand(product), s@(_: NonEmptyShoppingCart | EmptyShoppingCart)) =>
       println("Adding: " + product + " to shopping cart: " + s)
-      stay applying ItemAddedToShoppingCartEvent(product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to shopping cart!")
+      val availabilityCheckResultF = (productAvailabilityCheckerActor ? CheckProductAvailabilityCommand(product)).mapTo[ProductAvailabilityCheckedEvent]
+      val stateF = availabilityCheckResultF.map { p =>
+        if (p.isAvailable)
+          stay applying ItemAddedToShoppingCartEvent(product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to shopping cart!")
+        else
+          stay applying ProductNotAvailableEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "product is not available!")
+      }
+      Await.result(stateF, Duration.Inf)
     case Event(CheckoutCommand, s: NonEmptyShoppingCart) =>
       println("Checkout with products: " + s)
       goto(WaitingForChoosingDeliveryMethod) applying CheckedOutEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "checkout!")
@@ -60,7 +74,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends PersistentFSM[Orde
       goto(OrderReadyToProcess) applying PaymentMethodChosenEvent(data, paymentMethod) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "payment method chosen!")
   }
 
-  when(OrderReadyToProcess, orderReadyExpirationTimeout) {
+  when(OrderReadyToProcess, timeout.duration) {
     case Event(ProcessOrderCommand, _) =>
       println("Processing order...")
       goto(OrderProcessed) applying OrderProcessedEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order processed!")
@@ -111,5 +125,5 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends PersistentFSM[Orde
 }
 
 object OrderingProcessFSM {
-  def props(displayOrderActor: ActorRef): Props = Props(classOf[OrderingProcessFSM], displayOrderActor)
+  def props(displayOrderActor: ActorRef, productAvailabilityCheckerActor: ActorRef): Props = Props(classOf[OrderingProcessFSM], displayOrderActor, productAvailabilityCheckerActor)
 }
