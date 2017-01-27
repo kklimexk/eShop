@@ -2,13 +2,13 @@ package actors
 
 import actors.ProductAvailabilityCheckerActor.{CheckProductAvailabilityCommand, ProductAvailabilityCheckedEvent}
 import akka.actor.{Actor, Props}
-import db.FakeDatabase
+import db.DatabaseServiceImpl
 import domain.models.Product
 
 class ProductAvailabilityCheckerActor extends Actor {
   override def receive = {
     case CheckProductAvailabilityCommand(product) =>
-      sender ! ProductAvailabilityCheckedEvent(FakeDatabase.checkProductAvailability(product))
+      sender ! ProductAvailabilityCheckedEvent(DatabaseServiceImpl.checkProductAvailability(product))
   }
 }
 
