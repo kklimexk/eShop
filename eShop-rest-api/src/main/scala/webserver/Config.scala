@@ -1,15 +1,15 @@
 package webserver
 
-import actors.{DisplayOrderActor, ProductAvailabilityCheckerActor}
+import actors.{DisplayOrderActor, ProductQuantityActor}
 import routers.{MainRouter, OrderingProcessFSMRouter}
 import shared.Global.Implicits.system
 
 trait Config {
   val displayOrderActor = system.actorOf(DisplayOrderActor.props, "DisplayOrderActor")
-  val productAvailabilityCheckerActor = system.actorOf(ProductAvailabilityCheckerActor.props, "ProductAvailabilityCheckerActor")
+  val productQuantityActor = system.actorOf(ProductQuantityActor.props, "ProductQuantityActor")
 
   //routers
-  val orderingProcessFSMRouter = new OrderingProcessFSMRouter(displayOrderActor, productAvailabilityCheckerActor)
+  val orderingProcessFSMRouter = new OrderingProcessFSMRouter(displayOrderActor, productQuantityActor)
 
   //main router
   val mainRouter = new MainRouter(orderingProcessFSMRouter)

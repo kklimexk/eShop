@@ -18,6 +18,7 @@ sealed trait FakeDatabaseData {
 
 sealed trait DatabaseService {
   def checkProductAvailability(product: Product): Boolean
+  def increaseQuantityOfProduct(product: Product, by: Int = 1): Unit
 }
 
 object DatabaseServiceImpl extends DatabaseService with FakeDatabaseData {
@@ -27,6 +28,13 @@ object DatabaseServiceImpl extends DatabaseService with FakeDatabaseData {
         products.update(product, ProductQuantity(quantity - 1))
         true
       case _ => false
+    }
+  }
+  def increaseQuantityOfProduct(product: Product, by: Int = 1): Unit = {
+    products.get(product) match {
+      case Some(ProductQuantity(quantity)) =>
+        products.update(product, ProductQuantity(quantity + by))
+      case _ => throw new RuntimeException("Product not found!")
     }
   }
 }
