@@ -5,7 +5,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val akkaVersion = "2.4.16"
-lazy val akkaHttpVersion = "10.0.1"
+lazy val akkaHttpVersion = "10.0.3"
 lazy val levelDbVersion = "0.7"
 lazy val levelDbJniAllVersion = "1.8"
 lazy val scalaTestVersion = "3.0.1"
@@ -37,7 +37,10 @@ lazy val eShopRestApi = (project in file("eShop-rest-api")).
     name := "eShop-rest-api",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-      "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
+      "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion,
+      "org.scalactic" %% "scalactic" % scalaTestVersion,
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     )
   ).dependsOn(eShopCore, eShopShared)
 
