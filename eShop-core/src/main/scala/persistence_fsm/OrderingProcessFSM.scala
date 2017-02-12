@@ -4,6 +4,7 @@ import actors.DisplayOrderActor.{DisplayOrderCommand, OrderDisplayedEvent}
 import actors.ProductQuantityActor.{CheckProductAvailabilityCommand, IncreaseQuantityOfProductCommand, ProductAvailabilityCheckedEvent}
 
 import akka.actor.{ActorRef, Props}
+import akka.cluster.sharding.ShardRegion
 import akka.persistence.DeleteMessagesSuccess
 import akka.persistence.fsm.PersistentFSM
 import akka.pattern.ask
@@ -41,7 +42,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
   startWith(Idle, EmptyShoppingCart)
 
   when(Idle) {
-    case Event(CreateOrderCommand, EmptyShoppingCart) =>
+    case Event(CreateOrderCommand(_), EmptyShoppingCart) =>
       println("Creating shopping cart...")
       goto(InShoppingCart) applying OrderCreatedEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order created!")
   }
@@ -57,7 +58,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
           stay applying ProductNotAvailableEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "product is not available!")
       }
       Await.result(stateF, Duration.Inf)
-    case Event(CheckoutCommand, s: NonEmptyShoppingCart) =>
+    case Event(CheckoutCommand(_), s: NonEmptyShoppingCart) =>
       println("Checkout with products: " + s)
       goto(WaitingForChoosingDeliveryMethod) applying CheckedOutEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "checkout!")
   }
@@ -75,7 +76,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
   }
 
   when(OrderReadyToProcess, timeout.duration) {
-    case Event(ProcessOrderCommand, _) =>
+    case Event(ProcessOrderCommand(_), _) =>
       println("Processing order...")
       goto(OrderProcessed) applying OrderProcessedEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order processed!")
     case Event(StateTimeout, data: DataWithPaymentMethod) =>
@@ -128,5 +129,17 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
 }
 
 object OrderingProcessFSM {
+
+  val shardName: String = "Order"
+  val numberOfShards = 2
+
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case cmd: Command => (cmd.orderId.toString, cmd)
+  }
+
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case cmd: Command => (math.abs(cmd.orderId.toString.hashCode()) % numberOfShards).toString
+  }
+
   def props(displayOrderActor: ActorRef, productQuantityActor: ActorRef): Props = Props(classOf[OrderingProcessFSM], displayOrderActor, productQuantityActor)
 }

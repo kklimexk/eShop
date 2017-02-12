@@ -3,16 +3,18 @@ package domain
 import models.DeliveryMethod.DeliveryMethod
 import models.PaymentMethod.PaymentMethod
 
-sealed trait Command
+sealed trait Command {
+  def orderId: Long
+}
 
-case object CreateOrderCommand extends Command
+case class CreateOrderCommand(orderId: Long) extends Command
 
-case class AddItemToShoppingCartCommand(product: models.Product) extends Command
+case class AddItemToShoppingCartCommand(product: models.Product)(implicit val orderId: Long) extends Command
 
-case object CheckoutCommand extends Command
+case class CheckoutCommand(orderId: Long) extends Command
 
-case class ChooseDeliveryMethodCommand(deliveryMethod: DeliveryMethod) extends Command
+case class ChooseDeliveryMethodCommand(deliveryMethod: DeliveryMethod)(implicit val orderId: Long) extends Command
 
-case class ChoosePaymentMethodCommand(paymentMethod: PaymentMethod) extends Command
+case class ChoosePaymentMethodCommand(paymentMethod: PaymentMethod)(implicit val orderId: Long) extends Command
 
-case object ProcessOrderCommand extends Command
+case class ProcessOrderCommand(orderId: Long) extends Command

@@ -21,7 +21,7 @@ class OrderingProcessFSMRouterTest extends FunSuiteLike
 
   private val displayOrderActor = system.actorOf(DisplayOrderActor.props, "DisplayOrderActor")
   private val productQuantityActor = system.actorOf(ProductQuantityActor.props, "ProductQuantityActor")
-  private val orderingProcessFSMRouter = new OrderingProcessFSMRouter(displayOrderActor, productQuantityActor)
+  private val orderingProcessFSMRouter = new OrderingProcessFSMRouter(displayOrderActor, productQuantityActor)()
 
   private val route = orderingProcessFSMRouter.route
 

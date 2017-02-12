@@ -1,6 +1,6 @@
 package utils
 
-import akka.actor.ActorNotFound
+import akka.actor.{ActorNotFound, ActorSystem}
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -8,9 +8,7 @@ import akka.util.Timeout
 import akka.pattern.ask
 
 import domain.Command
-
 import routers.JsonRouter
-import shared.Global.Implicits.system
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -29,7 +27,7 @@ trait ResponseUtil { jsonRouter: JsonRouter =>
   }
 
   def extendedResponse[T: ClassTag, K: ClassTag](selectionActorPath: String, command: Command)(orElseResponse: => Future[K])
-                                                (implicit ev$1: T => ToResponseMarshallable, ev$2: K => ToResponseMarshallable, timeout: Timeout): Future[Route] = {
+                                                (implicit ev$1: T => ToResponseMarshallable, ev$2: K => ToResponseMarshallable, timeout: Timeout, system: ActorSystem): Future[Route] = {
     system.actorSelection(selectionActorPath).resolveOne()
       .map(actor => response((actor ? command).mapTo[T]))
       .recover {

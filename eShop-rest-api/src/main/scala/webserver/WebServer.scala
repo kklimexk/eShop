@@ -3,14 +3,14 @@ package webserver
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 
-import shared.Global.Implicits._
+import webserver.config.Config
 
 import scala.io.StdIn
 
-class WebServer extends Config {
+class WebServer { config: Config =>
   def run = {
     val route: Route = mainRouter.route
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+    val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine()
     bindingFuture

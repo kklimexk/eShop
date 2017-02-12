@@ -19,13 +19,15 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
   private val product1: Product = Product(1, "iPhone")
   private val product2: Product = Product(3, "Computer")
 
+  private implicit val orderId = 1123523L
+
   test("Ordering process FSM") {
     val displayOrderActor = system.actorOf(DisplayOrderActor.props, "DisplayOrderActor")
     val productQuantityActor = system.actorOf(ProductQuantityActor.props, "ProductQuantityActor")
 
     val fsm = system.actorOf(OrderingProcessFSM.props(displayOrderActor, productQuantityActor), "order")
 
-    fsm ! CreateOrderCommand
+    fsm ! CreateOrderCommand(orderId)
     expectMsg(FSMProcessInfoResponse(Idle.toString, EmptyShoppingCart.toString, "order created!"))
 
     processStepsOfFSMOrderingProcess(fsm)
@@ -34,7 +36,7 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
 
     processStepsOfFSMOrderingProcess(fsm)
 
-    fsm ! ProcessOrderCommand
+    fsm ! ProcessOrderCommand(orderId)
     expectMsg(FSMProcessInfoResponse(OrderReadyToProcess.toString, DataWithPaymentMethod(NonEmptyShoppingCart(Seq(product1, product2)), DeliveryMethod.Courier, PaymentMethod.CreditCard).toString, "order processed!"))
   }
 
@@ -48,7 +50,7 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
     fsm ! AddItemToShoppingCartCommand(product2)
     expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "product is not available!"))
 
-    fsm ! CheckoutCommand
+    fsm ! CheckoutCommand(orderId)
     expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "checkout!"))
 
     fsm ! ChooseDeliveryMethodCommand(DeliveryMethod.Courier)
