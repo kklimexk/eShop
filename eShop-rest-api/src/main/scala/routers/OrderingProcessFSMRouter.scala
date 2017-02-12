@@ -118,12 +118,7 @@ class OrderingProcessFSMRouter(displayOrderActor: ActorRef,
     }
   }
 
-  private def actorPath(orderId: Long): String = {
-    val res = orderingProcessRegion match {
-      case Some(orderingProcessR) => orderingProcessR.path.toString
-      case _ => "/user/order" + orderId
-    }
-    res
-  }
+  private def actorPath(orderId: Long): String =
+    orderingProcessRegion.map(_.path.toString).getOrElse("/user/order" + orderId)
 
 }
