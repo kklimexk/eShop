@@ -1,20 +1,12 @@
-package webserver.config
+package webserver.config.simple
 
 import actors.{DisplayOrderActor, ProductQuantityActor}
-
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-
-import com.typesafe.config.ConfigFactory
 import routers.{MainRouter, OrderingProcessFSMRouter}
+import webserver.config.Config
 
-trait SimpleConfig extends Config {
+import shared.AkkaSimpleSettings._
 
-  lazy val config = ConfigFactory.load()
-
-  implicit val system = ActorSystem("my-system", config)
-  implicit val materializer = ActorMaterializer()
-  implicit val executionContext = system.dispatcher
+trait WebServerSimpleConfig extends Config {
 
   val displayOrderActor = system.actorOf(DisplayOrderActor.props, "DisplayOrderActor")
   val productQuantityActor = system.actorOf(ProductQuantityActor.props, "ProductQuantityActor")

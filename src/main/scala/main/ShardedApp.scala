@@ -1,11 +1,19 @@
 package main
 
 import webserver.WebServer
-import webserver.config.ShardedConfig
+import webserver.config.sharded.{ShardedConfig, WebServerShardedConfig}
 
-object ShardedApp {
+import shared.AkkaShardedSettings._
+
+object ShardedApp extends ShardedConfig {
   def main(args: Array[String]): Unit = {
-    val webServer = new WebServer() with ShardedConfig
-    webServer.run
+
+    //set property -Dakka.remote.netty.tcp.port
+    val port = System.getProperty("akka.remote.netty.tcp.port")
+
+    if (port == "0") {
+      val webServer = new WebServer() with WebServerShardedConfig
+      webServer.run
+    }
   }
 }
