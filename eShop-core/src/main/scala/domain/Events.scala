@@ -3,11 +3,13 @@ package domain
 import domain.models.DeliveryMethod.DeliveryMethod
 import domain.models.PaymentMethod.PaymentMethod
 
+import shared.models.Product
+
 sealed trait OrderingProcessFSMEvent
 
 case object OrderCreatedEvent extends OrderingProcessFSMEvent
 
-case class ItemAddedToShoppingCartEvent(product: models.Product) extends OrderingProcessFSMEvent
+case class ItemAddedToShoppingCartEvent(product: Product) extends OrderingProcessFSMEvent
 
 case object ProductNotAvailableEvent extends OrderingProcessFSMEvent
 

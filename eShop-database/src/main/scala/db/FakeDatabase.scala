@@ -1,6 +1,6 @@
 package db
 
-import domain.models.{Product, ProductQuantity}
+import shared.models.{Product, ProductQuantity}
 
 import scala.collection.concurrent.TrieMap
 

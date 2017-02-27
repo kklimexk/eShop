@@ -2,7 +2,8 @@ package domain
 
 import models.DeliveryMethod.DeliveryMethod
 import models.PaymentMethod.PaymentMethod
-import models.Product
+
+import shared.models.Product
 
 sealed trait OrderingProcessFSMData {
   def addItem(product: Product): OrderingProcessFSMData

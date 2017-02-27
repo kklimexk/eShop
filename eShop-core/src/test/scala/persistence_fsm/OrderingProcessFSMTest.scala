@@ -6,17 +6,19 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.persistence.fsm.PersistentFSM
 import akka.testkit.{ImplicitSender, TestKit, TestKitBase}
 
-import domain.models.{DeliveryMethod, PaymentMethod, Product}
+import domain.models.{DeliveryMethod, PaymentMethod}
 import domain.{ChooseDeliveryMethodCommand, _}
 import domain.models.response.FSMProcessInfoResponse
 
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 
+import shared.models.Product
+
 class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with ImplicitSender with BeforeAndAfterAll {
 
   override implicit lazy val system: ActorSystem = ActorSystem(getClass.getSimpleName)
 
-  private val product1: Product = Product(1, "iPhone")
+  private val product1: shared.models.Product = Product(1, "iPhone")
   private val product2: Product = Product(3, "Computer")
 
   private implicit val orderId = 1123523L

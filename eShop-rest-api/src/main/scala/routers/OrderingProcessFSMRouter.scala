@@ -10,7 +10,7 @@ import domain.models._
 import domain.models.response.{FSMProcessInfoResponse, SimpleResponse}
 
 import persistence_fsm.OrderingProcessFSM
-
+import shared.models.Product
 import utils.ResponseUtil
 
 import scala.concurrent.duration._

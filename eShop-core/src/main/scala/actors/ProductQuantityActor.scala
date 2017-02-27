@@ -3,7 +3,7 @@ package actors
 import actors.ProductQuantityActor.{CheckProductAvailabilityCommand, IncreaseQuantityOfProductCommand, ProductAvailabilityCheckedEvent}
 import akka.actor.{Actor, Props}
 import db.DatabaseServiceImpl
-import domain.models.Product
+import shared.models.Product
 
 class ProductQuantityActor extends Actor {
   override def receive = {

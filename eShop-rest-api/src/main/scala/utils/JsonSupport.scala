@@ -1,8 +1,11 @@
 package utils
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import domain.models.response.{SimpleResponse, FSMProcessInfoResponse}
-import domain.models.{DeliveryMethodEntity, PaymentMethodEntity, Product}
+
+import domain.models.response.{FSMProcessInfoResponse, SimpleResponse}
+import domain.models.{DeliveryMethodEntity, PaymentMethodEntity}
+
+import shared.models.Product
 import spray.json.DefaultJsonProtocol
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {

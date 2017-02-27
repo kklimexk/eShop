@@ -8,6 +8,8 @@ import domain.models._
 import domain._
 import domain.models.response.FSMProcessInfoResponse
 
+import shared.models.Product
+
 import scala.concurrent.duration._
 import utils.JsonSupport
 
@@ -16,7 +18,7 @@ class OrderingProcessFSMRouterTest extends FunSuiteLike
 
   private implicit val routeTestTimeout = RouteTestTimeout(5.second)
 
-  private val product1: Product = Product(1, "iPhone")
+  private val product1: shared.models.Product = Product(1, "iPhone")
   private val product2: Product = Product(3, "Computer")
 
   private val displayOrderActor = system.actorOf(DisplayOrderActor.props, "DisplayOrderActor")

@@ -1,7 +1,8 @@
 lazy val commonSettings = Seq(
   name := "eShop",
   version := "1.0",
-  scalaVersion := "2.11.8"
+  scalaVersion := "2.11.8",
+  fork in Test := true
 )
 
 lazy val akkaVersion = "2.4.16"
@@ -9,12 +10,14 @@ lazy val akkaHttpVersion = "10.0.3"
 lazy val levelDbVersion = "0.7"
 lazy val levelDbJniAllVersion = "1.8"
 lazy val scalaTestVersion = "3.0.1"
+lazy val gatlingVersion = "2.2.3"
 
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "eShop"
-  ).aggregate(eShopCore, eShopRestApi, eShopShared).dependsOn(eShopCore, eShopRestApi, eShopShared)
+  ).aggregate(eShopCore, eShopRestApi, eShopShared, eShopPerformanceTests, eShopDatabase)
+   .dependsOn(eShopCore, eShopRestApi, eShopShared, eShopPerformanceTests, eShopDatabase)
 
 lazy val eShopCore = (project in file("eShop-core")).
   settings(commonSettings: _*).
@@ -31,7 +34,7 @@ lazy val eShopCore = (project in file("eShop-core")).
       "org.scalactic" %% "scalactic" % scalaTestVersion,
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     )
-  )
+  ).dependsOn(eShopDatabase, eShopShared)
 
 lazy val eShopRestApi = (project in file("eShop-rest-api")).
   settings(commonSettings: _*).
@@ -55,3 +58,19 @@ lazy val eShopShared = (project in file("eShop-shared")).
       "com.typesafe.akka" %% "akka-stream" % akkaVersion
     )
   )
+
+lazy val eShopPerformanceTests = (project in file("eShop-performance-tests")).
+  settings(commonSettings: _*).
+  settings(
+    name := "eShop-performance-tests",
+    libraryDependencies ++= Seq(
+      "io.gatling"            % "gatling-test-framework"    % gatlingVersion,
+      "io.gatling.highcharts" % "gatling-charts-highcharts" % gatlingVersion
+    )
+  ).enablePlugins(GatlingPlugin)
+
+lazy val eShopDatabase = (project in file("eShop-database")).
+  settings(commonSettings: _*).
+  settings(
+    name := "eShop-database"
+  ).dependsOn(eShopShared)
