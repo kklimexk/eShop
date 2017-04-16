@@ -40,8 +40,8 @@ class OrderingProcessFSMRouterTest extends FunSuiteLike
     Post("/orderId/1/addItemToShoppingCart", product2) ~> route ~> check {
       responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "product is not available!")
     }
-    Post("/orderId/1/checkout") ~> route ~> check {
-      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "checkout!")
+    Post("/orderId/1/confirmShoppingCart") ~> route ~> check {
+      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "confirm shopping cart!")
     }
     Post("/orderId/1/deliveryMethod", DeliveryMethodEntity("Courier")) ~> route ~> check {
       responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(WaitingForChoosingDeliveryMethod.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "delivery method chosen!")
@@ -49,8 +49,8 @@ class OrderingProcessFSMRouterTest extends FunSuiteLike
     Post("/orderId/1/paymentMethod", PaymentMethodEntity("CreditCard")) ~> route ~> check {
       responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(WaitingForChoosingPaymentMethod.toString, DataWithDeliveryMethod(NonEmptyShoppingCart(Seq(product1, product2)), DeliveryMethod.Courier).toString, "payment method chosen!")
     }
-    Post("/orderId/1/processOrder") ~> route ~> check {
-      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(OrderReadyToProcess.toString, DataWithPaymentMethod(NonEmptyShoppingCart(Seq(product1, product2)), DeliveryMethod.Courier, PaymentMethod.CreditCard).toString, "order processed!")
+    Post("/orderId/1/checkout") ~> route ~> check {
+      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(OrderReadyToCheckout.toString, DataWithPaymentMethod(NonEmptyShoppingCart(Seq(product1, product2)), DeliveryMethod.Courier, PaymentMethod.CreditCard).toString, "order processed!")
     }
   }
 }

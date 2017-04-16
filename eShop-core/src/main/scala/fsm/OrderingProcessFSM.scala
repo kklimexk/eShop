@@ -24,9 +24,9 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProces
     case Event(AddItemToShoppingCartCommand(product), s@(_: NonEmptyShoppingCart | EmptyShoppingCart)) =>
       println("Adding: " + product + " to shopping cart: " + s)
       stay using s.addItem(product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to shopping cart!")
-    case Event(CheckoutCommand, s: NonEmptyShoppingCart) =>
-      println("Checkout with products: " + s)
-      goto(WaitingForChoosingDeliveryMethod) using s replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "checkout!")
+    case Event(ConfirmShoppingCartCommand, s: NonEmptyShoppingCart) =>
+      println("Confirm shopping cart with products: " + s)
+      goto(WaitingForChoosingDeliveryMethod) using s replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "confirm shopping cart!")
   }
 
   when(WaitingForChoosingDeliveryMethod) {
@@ -38,11 +38,11 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProces
   when(WaitingForChoosingPaymentMethod) {
     case Event(ChoosePaymentMethodCommand(paymentMethod), data: DataWithDeliveryMethod) =>
       println("Payment method: " + paymentMethod)
-      goto(OrderReadyToProcess) using DataWithPaymentMethod(data.shoppingCart, data.deliveryMethod, paymentMethod) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "payment method chosen!")
+      goto(OrderReadyToCheckout) using DataWithPaymentMethod(data.shoppingCart, data.deliveryMethod, paymentMethod) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "payment method chosen!")
   }
 
-  when(OrderReadyToProcess, orderReadyExpirationTimeout) {
-    case Event(ProcessOrderCommand, _) =>
+  when(OrderReadyToCheckout, orderReadyExpirationTimeout) {
+    case Event(CheckoutCommand, _) =>
       println("Processing order...")
       goto(OrderProcessed) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order processed!")
     case Event(StateTimeout, data: DataWithPaymentMethod) =>
@@ -57,7 +57,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef) extends FSM[OrderingProces
   }
 
   onTransition {
-    case OrderReadyToProcess -> OrderProcessed =>
+    case OrderReadyToCheckout -> OrderProcessed =>
       stateData match {
         case dataOrder@DataWithPaymentMethod(_, _, _) =>
           displayOrderActor ! DisplayOrderCommand(dataOrder)

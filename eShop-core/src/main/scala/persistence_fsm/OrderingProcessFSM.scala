@@ -10,7 +10,7 @@ import akka.persistence.fsm.PersistentFSM
 import akka.pattern.ask
 import akka.util.Timeout
 
-import domain.{CheckedOutEvent, DeliveryMethodChosenEvent, _}
+import domain.{ConfirmedShoppingCartEvent, DeliveryMethodChosenEvent, _}
 import domain.models.response.FSMProcessInfoResponse
 
 import scala.concurrent.Await
@@ -31,10 +31,10 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
       case OrderCreatedEvent => currentData.empty()
       case ItemAddedToShoppingCartEvent(product) => currentData.addItem(product)
       case ProductNotAvailableEvent => currentData
-      case CheckedOutEvent => currentData
+      case ConfirmedShoppingCartEvent => currentData
       case DeliveryMethodChosenEvent(s, deliveryMethod) => currentData.withDeliveryMethod(s, deliveryMethod)
       case PaymentMethodChosenEvent(data, paymentMethod) => currentData.withPaymentMethod(data.shoppingCart, data.deliveryMethod, paymentMethod)
-      case OrderProcessedEvent => currentData
+      case CheckedOutEvent => currentData
       case OrderReadyTimeoutOccurredEvent => currentData.empty()
     }
   }
@@ -58,9 +58,9 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
           stay applying ProductNotAvailableEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "product is not available!")
       }
       Await.result(stateF, Duration.Inf)
-    case Event(CheckoutCommand(_), s: NonEmptyShoppingCart) =>
-      println("Checkout with products: " + s)
-      goto(WaitingForChoosingDeliveryMethod) applying CheckedOutEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "checkout!")
+    case Event(ConfirmShoppingCartCommand(_), s: NonEmptyShoppingCart) =>
+      println("Confirm shopping cart with products: " + s)
+      goto(WaitingForChoosingDeliveryMethod) applying ConfirmedShoppingCartEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "confirm shopping cart!")
   }
 
   when(WaitingForChoosingDeliveryMethod) {
@@ -72,13 +72,13 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
   when(WaitingForChoosingPaymentMethod) {
     case Event(ChoosePaymentMethodCommand(paymentMethod), data: DataWithDeliveryMethod) =>
       println("Payment method: " + paymentMethod)
-      goto(OrderReadyToProcess) applying PaymentMethodChosenEvent(data, paymentMethod) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "payment method chosen!")
+      goto(OrderReadyToCheckout) applying PaymentMethodChosenEvent(data, paymentMethod) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "payment method chosen!")
   }
 
-  when(OrderReadyToProcess, timeout.duration) {
-    case Event(ProcessOrderCommand(_), _) =>
+  when(OrderReadyToCheckout, timeout.duration) {
+    case Event(CheckoutCommand(_), _) =>
       println("Processing order...")
-      goto(OrderProcessed) applying OrderProcessedEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order processed!")
+      goto(OrderProcessed) applying CheckedOutEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "order processed!")
     case Event(StateTimeout, data: DataWithPaymentMethod) =>
       println("Timeout! Back to state InShoppingCart")
       data.shoppingCart.products.foreach { product =>
@@ -95,7 +95,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
   }
 
   onTransition {
-    case OrderReadyToProcess -> OrderProcessed =>
+    case OrderReadyToCheckout -> OrderProcessed =>
       stateData match {
         case dataOrder@DataWithPaymentMethod(_, _, _) =>
           displayOrderActor ! DisplayOrderCommand(dataOrder)

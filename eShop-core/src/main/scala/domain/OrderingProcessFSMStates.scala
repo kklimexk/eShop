@@ -20,8 +20,8 @@ case object WaitingForChoosingPaymentMethod extends OrderingProcessFSMState {
   override def identifier: String = "WaitingForChoosingPaymentMethod"
 }
 
-case object OrderReadyToProcess extends OrderingProcessFSMState {
-  override def identifier: String = "OrderReadyToProcess"
+case object OrderReadyToCheckout extends OrderingProcessFSMState {
+  override def identifier: String = "OrderReadyToCheckout"
 }
 
 case object OrderProcessed extends OrderingProcessFSMState {

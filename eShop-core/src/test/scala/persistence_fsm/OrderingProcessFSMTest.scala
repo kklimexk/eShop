@@ -38,8 +38,8 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
 
     processStepsOfFSMOrderingProcess(fsm)
 
-    fsm ! ProcessOrderCommand(orderId)
-    expectMsg(FSMProcessInfoResponse(OrderReadyToProcess.toString, DataWithPaymentMethod(NonEmptyShoppingCart(Seq(product1, product2)), DeliveryMethod.Courier, PaymentMethod.CreditCard).toString, "order processed!"))
+    fsm ! CheckoutCommand(orderId)
+    expectMsg(FSMProcessInfoResponse(OrderReadyToCheckout.toString, DataWithPaymentMethod(NonEmptyShoppingCart(Seq(product1, product2)), DeliveryMethod.Courier, PaymentMethod.CreditCard).toString, "order processed!"))
   }
 
   private def processStepsOfFSMOrderingProcess(fsm: ActorRef): Unit = {
@@ -52,8 +52,8 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
     fsm ! AddItemToShoppingCartCommand(product2)
     expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "product is not available!"))
 
-    fsm ! CheckoutCommand(orderId)
-    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "checkout!"))
+    fsm ! ConfirmShoppingCartCommand(orderId)
+    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "confirm shopping cart!"))
 
     fsm ! ChooseDeliveryMethodCommand(DeliveryMethod.Courier)
     expectMsg(FSMProcessInfoResponse(WaitingForChoosingDeliveryMethod.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "delivery method chosen!"))

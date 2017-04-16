@@ -30,10 +30,10 @@ class OrderingProcessFSMRouter(displayOrderActor: ActorRef,
     createOrder ~
     pathPrefix("orderId" / LongNumber) { implicit orderId =>
       addItemToShoppingCart ~
-      checkout ~
+      confirmShoppingCart ~
       chooseDeliveryMethod ~
       choosePaymentMethod ~
-      processOrder
+      checkout
     }
   }
 
@@ -66,10 +66,10 @@ class OrderingProcessFSMRouter(displayOrderActor: ActorRef,
     }
   }
 
-  private def checkout(implicit orderId: Long) = {
+  private def confirmShoppingCart(implicit orderId: Long) = {
     post {
-      path("checkout") {
-        val responseF = extendedResponse[FSMProcessInfoResponse, SimpleResponse](actorPath(orderId), CheckoutCommand(orderId))(orderingProcessFSMFailureResponse)
+      path("confirmShoppingCart") {
+        val responseF = extendedResponse[FSMProcessInfoResponse, SimpleResponse](actorPath(orderId), ConfirmShoppingCartCommand(orderId))(orderingProcessFSMFailureResponse)
         onComplete(responseF) {
           case Success(route) => route
           case Failure(ex) => complete(ex)
@@ -106,10 +106,10 @@ class OrderingProcessFSMRouter(displayOrderActor: ActorRef,
     }
   }
 
-  private def processOrder(implicit orderId: Long) = {
+  private def checkout(implicit orderId: Long) = {
     post {
-      path("processOrder") {
-        val responseF = extendedResponse[FSMProcessInfoResponse, SimpleResponse](actorPath(orderId), ProcessOrderCommand(orderId))(orderingProcessFSMFailureResponse)
+      path("checkout") {
+        val responseF = extendedResponse[FSMProcessInfoResponse, SimpleResponse](actorPath(orderId), CheckoutCommand(orderId))(orderingProcessFSMFailureResponse)
         onComplete(responseF) {
           case Success(route) => route
           case Failure(ex) => complete(ex)

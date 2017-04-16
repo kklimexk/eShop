@@ -28,8 +28,8 @@ class OrderingProcessScenario extends OrderScenario {
       .pause(3)
       .exec(addItemToShoppingCart(orderId))
       .pause(3)
-      .exec(http("checkout")
-        .post(StaticStringExpression(orderPrefix + "/checkout")))
+      .exec(http("confirmShoppingCart")
+        .post(StaticStringExpression(orderPrefix + "/confirmShoppingCart")))
       .pause(3)
       .exec(http("deliveryMethod")
         .post(StaticStringExpression(orderPrefix + "/deliveryMethod"))
@@ -39,8 +39,8 @@ class OrderingProcessScenario extends OrderScenario {
         .post(StaticStringExpression(orderPrefix + "/paymentMethod"))
         .body(StringBody(paymentMethod)).asJSON)
       .pause(3)
-      .exec(http("processOrder")
-        .post(StaticStringExpression(orderPrefix + "/processOrder")))
+      .exec(http("checkout")
+        .post(StaticStringExpression(orderPrefix + "/checkout")))
       .pause(5)
   }
 
