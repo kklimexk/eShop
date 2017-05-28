@@ -6,6 +6,8 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.persistence.fsm.PersistentFSM
 import akka.testkit.{ImplicitSender, TestKit, TestKitBase}
 
+import db.populators.Seeder
+
 import domain.models.{DeliveryMethod, PaymentMethod}
 import domain.{ChooseDeliveryMethodCommand, _}
 import domain.models.response.FSMProcessInfoResponse
@@ -18,7 +20,7 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
 
   override implicit lazy val system: ActorSystem = ActorSystem(getClass.getSimpleName)
 
-  private val product1: shared.models.Product = Product(1, "iPhone")
+  private val product1: Product = Product(1, "iPhone")
   private val product2: Product = Product(3, "Computer")
 
   private implicit val orderId = 1123523L
@@ -60,6 +62,10 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
 
     fsm ! ChoosePaymentMethodCommand(PaymentMethod.CreditCard)
     expectMsg(FSMProcessInfoResponse(WaitingForChoosingPaymentMethod.toString, DataWithDeliveryMethod(NonEmptyShoppingCart(Seq(product1, product2)), DeliveryMethod.Courier).toString, "payment method chosen!"))
+  }
+
+  override protected def beforeAll(): Unit = {
+    Seeder.run()
   }
 
   override def afterAll() {

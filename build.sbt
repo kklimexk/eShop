@@ -11,6 +11,9 @@ lazy val levelDbVersion = "0.7"
 lazy val levelDbJniAllVersion = "1.8"
 lazy val scalaTestVersion = "3.0.1"
 lazy val gatlingVersion = "2.2.3"
+lazy val slickVersion = "3.2.0"
+lazy val slf4jNopVersion = "1.6.4"
+lazy val postgresVersion = "9.4-1206-jdbc42"
 
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
@@ -72,5 +75,12 @@ lazy val eShopPerformanceTests = (project in file("eShop-performance-tests")).
 lazy val eShopDatabase = (project in file("eShop-database")).
   settings(commonSettings: _*).
   settings(
-    name := "eShop-database"
+    name := "eShop-database",
+    libraryDependencies ++= Seq(
+      "com.typesafe.slick" %% "slick" % slickVersion,
+      "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
+      "org.postgresql" % "postgresql" % postgresVersion,
+      "org.scalactic" %% "scalactic" % scalaTestVersion,
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+    )
   ).dependsOn(eShopShared)

@@ -25,4 +25,9 @@ package object shared {
     implicit lazy val materializer = ActorMaterializer()
     implicit lazy val executionContext = system.dispatcher
   }
+  object DefaultThreadPool {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    implicit lazy val executionContext = global
+  }
 }

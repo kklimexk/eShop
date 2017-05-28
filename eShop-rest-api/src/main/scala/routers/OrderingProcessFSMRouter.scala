@@ -10,7 +10,7 @@ import domain.models._
 import domain.models.response.{FSMProcessInfoResponse, SimpleResponse}
 
 import persistence_fsm.OrderingProcessFSM
-import shared.models.Product
+import shared.models.{Product, ProductOrderItem}
 import utils.ResponseUtil
 
 import scala.concurrent.duration._
@@ -55,8 +55,8 @@ class OrderingProcessFSMRouter(displayOrderActor: ActorRef,
   private def addItemToShoppingCart(implicit orderId: Long) = {
     post {
       path("addItemToShoppingCart") {
-        entity(as[Product]) { product =>
-          val responseF = extendedResponse[FSMProcessInfoResponse, SimpleResponse](actorPath(orderId), AddItemToShoppingCartCommand(product))(orderingProcessFSMFailureResponse)
+        entity(as[ProductOrderItem]) { productOrderItem =>
+          val responseF = extendedResponse[FSMProcessInfoResponse, SimpleResponse](actorPath(orderId), AddItemToShoppingCartCommand(productOrderItem.toProduct))(orderingProcessFSMFailureResponse)
           onComplete(responseF) {
             case Success(route) => route
             case Failure(ex) => complete(ex)

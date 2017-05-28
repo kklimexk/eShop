@@ -15,7 +15,7 @@ import domain.models.response.FSMProcessInfoResponse
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+import shared.DefaultThreadPool._
 import scala.reflect._
 
 class OrderingProcessFSM(displayOrderActor: ActorRef,
@@ -51,11 +51,14 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
     case Event(AddItemToShoppingCartCommand(product), s@(_: NonEmptyShoppingCart | EmptyShoppingCart)) =>
       println("Adding: " + product + " to shopping cart: " + s)
       val availabilityCheckResultF = (productQuantityActor ? CheckProductAvailabilityCommand(product)).mapTo[ProductAvailabilityCheckedEvent]
-      val stateF = availabilityCheckResultF.map { p =>
-        if (p.isAvailable)
-          stay applying ItemAddedToShoppingCartEvent(product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to shopping cart!")
-        else
-          stay applying ProductNotAvailableEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "product is not available!")
+      val stateF = availabilityCheckResultF.flatMap { p =>
+        val isAvailableF = p.isAvailable
+        isAvailableF map { isAvailable =>
+          if (isAvailable)
+            stay applying ItemAddedToShoppingCartEvent(product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to shopping cart!")
+          else
+            stay applying ProductNotAvailableEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "product is not available!")
+        }
       }
       Await.result(stateF, Duration.Inf)
     case Event(ConfirmShoppingCartCommand(_), s: NonEmptyShoppingCart) =>
