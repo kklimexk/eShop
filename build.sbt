@@ -78,6 +78,7 @@ lazy val eShopDatabase = (project in file("eShop-database")).
     name := "eShop-database",
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % slickVersion,
+      "org.slf4j" % "slf4j-nop" % slf4jNopVersion,
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
       "org.postgresql" % "postgresql" % postgresVersion,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
