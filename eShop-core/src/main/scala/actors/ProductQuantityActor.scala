@@ -3,17 +3,18 @@ package actors
 import actors.ProductQuantityActor.{CheckProductAvailabilityCommand, IncreaseQuantityOfProductCommand, ProductAvailabilityCheckedEvent}
 import akka.actor.{Actor, Props}
 import db.services.ProductDatabaseService
-import shared.models.Product
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
+
+import shared.models.Product
+import shared.DefaultThreadPool._
 
 class ProductQuantityActor extends Actor {
   override def receive = {
     case CheckProductAvailabilityCommand(product) =>
       sender ! ProductAvailabilityCheckedEvent(ProductDatabaseService.decreaseIfAvailable(product.id))
     case IncreaseQuantityOfProductCommand(product) =>
-      Await.ready(ProductDatabaseService.changeQuantityOfProduct(product.id), Duration.Inf)
+      ProductDatabaseService.changeQuantityOfProduct(product.id).onComplete(_ => ())
   }
 }
 

@@ -11,9 +11,7 @@ class ProductDatabaseServiceTest extends AsyncFunSuiteLike with BeforeAndAfterAl
 
   private val productDbService = ProductDatabaseService
 
-  override protected def beforeAll(): Unit = {
-    Seeder.run()
-  }
+  override protected def beforeAll(): Unit = Seeder.run()
 
   test("find product by id") {
     findProductById(1, "iphone")
@@ -48,8 +46,7 @@ class ProductDatabaseServiceTest extends AsyncFunSuiteLike with BeforeAndAfterAl
     for {
       _ <- changeQuantityOfProduct(productId, by = 2, expectedQuantity = 7)
       _ <- changeQuantityOfProduct(productId2, by = 97, expectedQuantity = 100)
-      _ <- changeQuantityOfProduct(productId, by = -7, expectedQuantity = 0)
-      res <- recoverToSucceededIf[RuntimeException](productDbService.changeQuantityOfProduct(productId2, by = -200))
+      res <- changeQuantityOfProduct(productId, by = -7, expectedQuantity = 0)
     } yield res
   }
 
