@@ -85,3 +85,7 @@ lazy val eShopDatabase = (project in file("eShop-database")).
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     )
   ).dependsOn(eShopShared)
+
+libraryDependencies ~= { _.map(_
+  .exclude("ch.qos.logback", "logback-classic*"))
+}
