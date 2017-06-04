@@ -13,6 +13,8 @@ case class ItemAddedToShoppingCartEvent(product: Product) extends OrderingProces
 
 case object ProductNotAvailableEvent extends OrderingProcessFSMEvent
 
+case object AddingItemToShoppingCartEvent extends OrderingProcessFSMEvent
+
 case object ConfirmedShoppingCartEvent extends OrderingProcessFSMEvent
 
 case class DeliveryMethodChosenEvent(shoppingCart: NonEmptyShoppingCart, deliveryMethod: DeliveryMethod) extends OrderingProcessFSMEvent

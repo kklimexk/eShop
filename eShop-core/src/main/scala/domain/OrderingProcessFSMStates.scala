@@ -12,6 +12,10 @@ case object InShoppingCart extends OrderingProcessFSMState {
   override def identifier: String = "InShoppingCart"
 }
 
+case object InShoppingCartPartial extends OrderingProcessFSMState {
+  override def identifier: String = "InShoppingCartPartial"
+}
+
 case object WaitingForChoosingDeliveryMethod extends OrderingProcessFSMState {
   override def identifier: String = "WaitingForChoosingDeliveryMethod"
 }

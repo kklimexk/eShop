@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import akka.pattern.ask
 
-import domain.Command
+import domain.OrderCommand
 import routers.JsonRouter
 
 import scala.concurrent.Future
@@ -26,7 +26,7 @@ trait ResponseUtil { jsonRouter: JsonRouter =>
     }
   }
 
-  def extendedResponse[T: ClassTag, K: ClassTag](selectionActorPath: String, command: Command)(orElseResponse: => Future[K])
+  def extendedResponse[T: ClassTag, K: ClassTag](selectionActorPath: String, command: OrderCommand)(orElseResponse: => Future[K])
                                                 (implicit ev$1: T => ToResponseMarshallable, ev$2: K => ToResponseMarshallable, timeout: Timeout, system: ActorSystem): Future[Route] = {
     system.actorSelection(selectionActorPath).resolveOne()
       .map(actor => response((actor ? command).mapTo[T]))

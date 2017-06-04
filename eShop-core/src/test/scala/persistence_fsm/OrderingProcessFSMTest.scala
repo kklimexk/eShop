@@ -20,8 +20,8 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
 
   override implicit lazy val system: ActorSystem = ActorSystem(getClass.getSimpleName)
 
-  private val product1: Product = Product(1, "iPhone")
-  private val product2: Product = Product(3, "Computer")
+  private val product1: Product = Product(1, "iPhone", 1)
+  private val product2: Product = Product(3, "Computer", 1)
 
   private implicit val orderId = 1123523L
 
@@ -45,14 +45,22 @@ class OrderingProcessFSMTest extends FunSuiteLike with TestKitBase with Implicit
   }
 
   private def processStepsOfFSMOrderingProcess(fsm: ActorRef): Unit = {
+    val responseMessage = "adding item to shopping cart!"
+
     fsm ! AddItemToShoppingCartCommand(product1)
-    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, EmptyShoppingCart.toString, "added item to shopping cart!"))
+    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, EmptyShoppingCart.toString, responseMessage))
+
+    //To ensure order of added items
+    Thread.sleep(300)
 
     fsm ! AddItemToShoppingCartCommand(product2)
-    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1)).toString, "added item to shopping cart!"))
+    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1)).toString, responseMessage))
+
+    //To ensure order of added items
+    Thread.sleep(300)
 
     fsm ! AddItemToShoppingCartCommand(product2)
-    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "product is not available!"))
+    expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, responseMessage))
 
     fsm ! ConfirmShoppingCartCommand(orderId)
     expectMsg(FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "confirm shopping cart!"))

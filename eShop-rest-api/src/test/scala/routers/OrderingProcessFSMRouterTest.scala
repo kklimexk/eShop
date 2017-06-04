@@ -32,17 +32,23 @@ class OrderingProcessFSMRouterTest extends FunSuiteLike
   private val route = orderingProcessFSMRouter.route
 
   test("Ordering process FSM router") {
+    val responseMessage = "adding item to shopping cart!"
+
     Post("/createOrder/1") ~> route ~> check {
       responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(Idle.toString, EmptyShoppingCart.toString, "order created!")
     }
     Post("/orderId/1/addItemToShoppingCart", productOrderItem1) ~> route ~> check {
-      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, EmptyShoppingCart.toString, "added item to shopping cart!")
+      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, EmptyShoppingCart.toString, responseMessage)
     }
+    //To ensure order of added items
+    Thread.sleep(300)
     Post("/orderId/1/addItemToShoppingCart", productOrderItem2) ~> route ~> check {
-      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1)).toString, "added item to shopping cart!")
+      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1)).toString, responseMessage)
     }
+    //To ensure order of added items
+    Thread.sleep(300)
     Post("/orderId/1/addItemToShoppingCart", productOrderItem2) ~> route ~> check {
-      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "product is not available!")
+      responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, responseMessage)
     }
     Post("/orderId/1/confirmShoppingCart") ~> route ~> check {
       responseAs[FSMProcessInfoResponse] shouldEqual FSMProcessInfoResponse(InShoppingCart.toString, NonEmptyShoppingCart(Seq(product1, product2)).toString, "confirm shopping cart!")

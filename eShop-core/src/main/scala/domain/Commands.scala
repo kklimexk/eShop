@@ -5,18 +5,22 @@ import models.PaymentMethod.PaymentMethod
 
 import shared.models.Product
 
-sealed trait Command {
+sealed trait OrderCommand {
   def orderId: Long
 }
 
-case class CreateOrderCommand(orderId: Long) extends Command
+sealed trait Command
 
-case class AddItemToShoppingCartCommand(product: Product)(implicit val orderId: Long) extends Command
+case class CreateOrderCommand(orderId: Long) extends OrderCommand
 
-case class ConfirmShoppingCartCommand(orderId: Long) extends Command
+case class AddItemToShoppingCartCommand(product: Product)(implicit val orderId: Long) extends OrderCommand
 
-case class ChooseDeliveryMethodCommand(deliveryMethod: DeliveryMethod)(implicit val orderId: Long) extends Command
+case object ProductNotAvailableCommand extends Command
 
-case class ChoosePaymentMethodCommand(paymentMethod: PaymentMethod)(implicit val orderId: Long) extends Command
+case class ConfirmShoppingCartCommand(orderId: Long) extends OrderCommand
 
-case class CheckoutCommand(orderId: Long) extends Command
+case class ChooseDeliveryMethodCommand(deliveryMethod: DeliveryMethod)(implicit val orderId: Long) extends OrderCommand
+
+case class ChoosePaymentMethodCommand(paymentMethod: PaymentMethod)(implicit val orderId: Long) extends OrderCommand
+
+case class CheckoutCommand(orderId: Long) extends OrderCommand

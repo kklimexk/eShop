@@ -3,7 +3,7 @@ package persistence_fsm
 import actors.DisplayOrderActor.{DisplayOrderCommand, OrderDisplayedEvent}
 import actors.ProductQuantityActor.{CheckProductAvailabilityCommand, IncreaseQuantityOfProductCommand, ProductAvailabilityCheckedEvent}
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{ActorRef, Props, Stash}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.DeleteMessagesSuccess
 import akka.persistence.fsm.PersistentFSM
@@ -13,13 +13,13 @@ import akka.util.Timeout
 import domain.{ConfirmedShoppingCartEvent, DeliveryMethodChosenEvent, _}
 import domain.models.response.FSMProcessInfoResponse
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
 import shared.DefaultThreadPool._
+
 import scala.reflect._
 
 class OrderingProcessFSM(displayOrderActor: ActorRef,
-                         productQuantityActor: ActorRef) extends PersistentFSM[OrderingProcessFSMState, OrderingProcessFSMData, OrderingProcessFSMEvent] {
+                         productQuantityActor: ActorRef) extends PersistentFSM[OrderingProcessFSMState, OrderingProcessFSMData, OrderingProcessFSMEvent] with Stash {
 
   override def domainEventClassTag: ClassTag[OrderingProcessFSMEvent] = classTag[OrderingProcessFSMEvent]
   override def persistenceId: String = "OrderingProcessFSM" + self.path
@@ -31,6 +31,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
       case OrderCreatedEvent => currentData.empty()
       case ItemAddedToShoppingCartEvent(product) => currentData.addItem(product)
       case ProductNotAvailableEvent => currentData
+      case AddingItemToShoppingCartEvent => currentData
       case ConfirmedShoppingCartEvent => currentData
       case DeliveryMethodChosenEvent(s, deliveryMethod) => currentData.withDeliveryMethod(s, deliveryMethod)
       case PaymentMethodChosenEvent(data, paymentMethod) => currentData.withPaymentMethod(data.shoppingCart, data.deliveryMethod, paymentMethod)
@@ -48,22 +49,33 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
   }
 
   when(InShoppingCart) {
-    case Event(AddItemToShoppingCartCommand(product), s@(_: NonEmptyShoppingCart | EmptyShoppingCart)) =>
+    case Event(addItem@AddItemToShoppingCartCommand(product), s@(_: NonEmptyShoppingCart | EmptyShoppingCart)) =>
       println("Adding: " + product + " to shopping cart: " + s)
       val availabilityCheckResultF = (productQuantityActor ? CheckProductAvailabilityCommand(product)).mapTo[ProductAvailabilityCheckedEvent]
       val stateF = availabilityCheckResultF.flatMap { p =>
         val isAvailableF = p.isAvailable
         isAvailableF map { isAvailable =>
           if (isAvailable)
-            stay applying ItemAddedToShoppingCartEvent(product) replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "added item to shopping cart!")
+            self forward addItem
           else
-            stay applying ProductNotAvailableEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "product is not available!")
+            self forward ProductNotAvailableCommand
         }
       }
-      Await.result(stateF, Duration.Inf)
+      stateF.onComplete(_ => ())
+
+      goto(InShoppingCartPartial) applying AddingItemToShoppingCartEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "adding item to shopping cart!")
     case Event(ConfirmShoppingCartCommand(_), s: NonEmptyShoppingCart) =>
       println("Confirm shopping cart with products: " + s)
       goto(WaitingForChoosingDeliveryMethod) applying ConfirmedShoppingCartEvent replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "confirm shopping cart!")
+  }
+
+  when(InShoppingCartPartial) {
+    case Event(AddItemToShoppingCartCommand(product), _) =>
+      println("Added item: " + product + " to shopping cart!")
+      goto(InShoppingCart) applying ItemAddedToShoppingCartEvent(product)
+    case Event(ProductNotAvailableCommand, _) =>
+      println("Product is not available!")
+      goto(InShoppingCart) applying ProductNotAvailableEvent
   }
 
   when(WaitingForChoosingDeliveryMethod) {
@@ -103,6 +115,7 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
         case dataOrder@DataWithPaymentMethod(_, _, _) =>
           displayOrderActor ! DisplayOrderCommand(dataOrder)
       }
+    case InShoppingCartPartial -> InShoppingCart => unstashAll()
   }
 
   onTermination {
@@ -117,6 +130,9 @@ class OrderingProcessFSM(displayOrderActor: ActorRef,
     case Event(DeleteMessagesSuccess(toSequenceNr), _) =>
       println("All messages from journal deleted!" + " toSequenceNr: " + toSequenceNr)
       stop()
+    case Event(AddItemToShoppingCartCommand(_) | ProductNotAvailableCommand, _) =>
+      stash()
+      stay()
     case Event(e, _) =>
       println("Event: " + e + " cannot be handled in state: " + stateName)
       stay replying FSMProcessInfoResponse(stateName.toString, stateData.toString, "Event: " + e + " cannot be handled in state: " + stateName)
@@ -137,11 +153,11 @@ object OrderingProcessFSM {
   val numberOfShards = 2
 
   val extractEntityId: ShardRegion.ExtractEntityId = {
-    case cmd: Command => (cmd.orderId.toString, cmd)
+    case cmd: OrderCommand => (cmd.orderId.toString, cmd)
   }
 
   val extractShardId: ShardRegion.ExtractShardId = {
-    case cmd: Command => (math.abs(cmd.orderId.toString.hashCode()) % numberOfShards).toString
+    case cmd: OrderCommand => (math.abs(cmd.orderId.toString.hashCode()) % numberOfShards).toString
   }
 
   def props(displayOrderActor: ActorRef, productQuantityActor: ActorRef): Props = Props(classOf[OrderingProcessFSM], displayOrderActor, productQuantityActor)
