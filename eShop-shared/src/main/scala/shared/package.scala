@@ -1,7 +1,6 @@
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.ExecutionContext
 
@@ -12,14 +11,14 @@ package object shared {
     implicit val executionContext: ExecutionContext
   }
   object AkkaSimpleSettings extends AkkaSettings {
-    lazy val config = ConfigFactory.load()
+    lazy val config: Config = ConfigFactory.load()
 
     implicit lazy val system = ActorSystem("my-system", config)
     implicit lazy val materializer = ActorMaterializer()
     implicit lazy val executionContext = system.dispatcher
   }
   object AkkaShardedSettings extends AkkaSettings {
-    lazy val config = ConfigFactory.load("sharded")
+    lazy val config: Config = ConfigFactory.load("sharded")
 
     implicit lazy val system = ActorSystem("my-system", config)
     implicit lazy val materializer = ActorMaterializer()

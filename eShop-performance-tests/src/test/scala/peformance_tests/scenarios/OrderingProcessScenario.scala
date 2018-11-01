@@ -33,11 +33,11 @@ class OrderingProcessScenario extends OrderScenario {
       .pause(3)
       .exec(http("deliveryMethod")
         .post(StaticStringExpression(orderPrefix + "/deliveryMethod"))
-        .body(StringBody(deliveryMethod)).asJSON)
+        .body(StringBody(deliveryMethod)).asJson)
       .pause(3)
       .exec(http("paymentMethod")
         .post(StaticStringExpression(orderPrefix + "/paymentMethod"))
-        .body(StringBody(paymentMethod)).asJSON)
+        .body(StringBody(paymentMethod)).asJson)
       .pause(3)
       .exec(http("checkout")
         .post(StaticStringExpression(orderPrefix + "/checkout")))
@@ -47,7 +47,7 @@ class OrderingProcessScenario extends OrderScenario {
   private def addItemToShoppingCart(orderId: Int) = repeat(times = 10) {
     exec(http("addItemToShoppingCart")
       .post(StaticStringExpression("/orderId/" + orderId + "/addItemToShoppingCart"))
-      .body(StringBody(productsJson.apply(Random.nextInt(productsJson.size)))).asJSON)
+      .body(StringBody(productsJson.apply(Random.nextInt(productsJson.size)))).asJson)
       .pause(3)
   }
 }

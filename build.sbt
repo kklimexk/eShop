@@ -1,18 +1,18 @@
 lazy val commonSettings = Seq(
   name := "eShop",
   version := "1.0",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.7",
   fork in Test := true
 )
 
-lazy val akkaVersion = "2.4.16"
-lazy val akkaHttpVersion = "10.0.3"
-lazy val levelDbVersion = "0.7"
+lazy val akkaVersion = "2.5.17"
+lazy val akkaHttpVersion = "10.1.5"
+lazy val levelDbVersion = "0.10"
 lazy val levelDbJniAllVersion = "1.8"
-lazy val scalaTestVersion = "3.0.1"
-lazy val gatlingVersion = "2.2.3"
-lazy val slickVersion = "3.2.0"
-lazy val slf4jNopVersion = "1.6.4"
+lazy val scalaTestVersion = "3.0.5"
+lazy val gatlingVersion = "3.0.0"
+lazy val slickVersion = "3.2.3"
+lazy val slf4jNopVersion = "1.7.25"
 lazy val postgresVersion = "9.4-1206-jdbc42"
 
 lazy val root = (project in file(".")).
